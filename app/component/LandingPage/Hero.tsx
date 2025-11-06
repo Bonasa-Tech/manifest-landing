@@ -1,11 +1,55 @@
 'use client';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Wrapper from '../shared/ComponentWrapper/Wrapper';
 import * as Icons from '../../svg/Icons';
 import { Fade, Zoom, Slide } from 'react-awesome-reveal';
 import Link from 'next/link';
 
 const Hero: React.FC = () => {
+  const [displayVolume, setDisplayVolume] = useState<number | null>(null);
+  const [targetVolume, setTargetVolume] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchVolume = async () => {
+      try {
+        const response = await fetch('https://mfx-stats-mainnet.fly.dev/volume');
+        const data = await response.json();
+        const usdcVolume = data.totalVolume?.['solana:EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'];
+        if (usdcVolume) {
+          // First load: start at 99.8%
+          if (targetVolume === null) {
+            setDisplayVolume(usdcVolume * 0.998);
+          }
+          setTargetVolume(usdcVolume);
+        }
+      } catch (error) {
+        console.error('Error fetching volume data:', error);
+      }
+    };
+
+    fetchVolume();
+    const fetchInterval = setInterval(fetchVolume, 10000);
+    return () => clearInterval(fetchInterval);
+  }, [targetVolume]);
+
+  // Smooth increment animation
+  useEffect(() => {
+    if (targetVolume === null || displayVolume === null) return;
+    if (displayVolume >= targetVolume) return;
+
+    const diff = targetVolume - displayVolume;
+    const increment = diff / 10 / 60; // Spread over 10 seconds at 60 FPS
+
+    const timer = setInterval(() => {
+      setDisplayVolume(prev => {
+        if (prev === null) return targetVolume;
+        const next = prev + increment;
+        return next >= targetVolume ? targetVolume : next;
+      });
+    }, 1000 / 60);
+
+    return () => clearInterval(timer);
+  }, [targetVolume, displayVolume]);
   return (
     <div className='w-full overflow-x-hidden overflow-y-hidden h-[calc(100vh-60px)] md:h-[calc(100vh-90px)] justify-center items-center flex relative'>
       <div className="absolute inset-0 bg-[url('/assets/logo.svg')] bg-no-repeat bg-center bg-[length:35%_auto] opacity-5"></div>
@@ -34,23 +78,43 @@ const Hero: React.FC = () => {
               delay={500}
               triggerOnce
             >
-              <div className='w-full max-w-[300px] rounded-xl 3xl:rounded-2xl sm:max-w-[500px] md:max-w-[700px] 2xl:max-w-[900px] 3xl:max-w-[1750px] flex justify-center items-center bg-gradient-to-r from-[#927252] to-[#95C9BD] p-[2px]'>
-                <div className='w-full py-3 2xl:py-5 3xl:py-14 flex justify-center rounded-xl items-center gap-24 sm:gap-28 3xl:gap-[14rem] bg-[#3d3b3a]'>
-                  <div className='flex justify-center items-center flex-col gap-4'>
-                    <p className='text-[#95C9BD] text-[10px] sm:text-[16px] md:text-[20px] 2xl:text-[28px] 3xl:text-[36px] font-terminaExtraDemi'>
-                      0.00 %
-                    </p>
-                    <p className='text-[12px] sm:text-[14px] md:text-[16px] 2xl:text-[24px] font-normal 3xl:text-[32px] text-[#bca378]/90'>
-                      Trading Fees
-                    </p>
+              <div className='flex flex-col gap-3 w-full max-w-[300px] sm:max-w-[500px] md:max-w-[700px] 2xl:max-w-[900px] 3xl:max-w-[1750px]'>
+                {/* Total Volume Display */}
+                {displayVolume !== null && (
+                  <div className='w-full flex justify-center items-center'>
+                    <div className='flex flex-col items-center gap-1'>
+                      <p
+                        className='text-[#95C9BD] text-[14px] sm:text-[18px] md:text-[22px] 2xl:text-[28px] 3xl:text-[36px] font-terminaExtraDemi'
+                        style={{ fontVariantNumeric: 'tabular-nums', fontFamily: 'monospace' }}
+                      >
+                        ${Math.round(displayVolume).toLocaleString('en-US')}
+                      </p>
+                      <p className='text-[10px] sm:text-[12px] md:text-[14px] 2xl:text-[18px] font-normal 3xl:text-[24px] text-[#bca378]/70'>
+                        Total Volume
+                      </p>
+                    </div>
                   </div>
-                  <div className='flex justify-center items-center flex-col gap-4'>
-                    <p className='text-[#95C9BD] text-[10px] sm:text-[16px] md:text-[20px] 2xl:text-[28px] 3xl:text-[36px] font-terminaExtraDemi'>
-                      0.004 SOL
-                    </p>
-                    <p className='text-[12px] sm:text-[14px] md:text-[16px] 2xl:text-[24px] font-normal 3xl:text-[32px] text-[#bca378]/90'>
-                      Listing Cost
-                    </p>
+                )}
+
+                {/* Trading Fees and Listing Cost Box */}
+                <div className='w-full rounded-xl 3xl:rounded-2xl flex justify-center items-center bg-gradient-to-r from-[#927252] to-[#95C9BD] p-[2px]'>
+                  <div className='w-full py-3 2xl:py-5 3xl:py-14 flex justify-center rounded-xl items-center gap-24 sm:gap-28 3xl:gap-[14rem] bg-[#3d3b3a]'>
+                    <div className='flex justify-center items-center flex-col gap-4'>
+                      <p className='text-[#95C9BD] text-[10px] sm:text-[16px] md:text-[20px] 2xl:text-[28px] 3xl:text-[36px] font-terminaExtraDemi'>
+                        0.00 %
+                      </p>
+                      <p className='text-[12px] sm:text-[14px] md:text-[16px] 2xl:text-[24px] font-normal 3xl:text-[32px] text-[#bca378]/90'>
+                        Trading Fees
+                      </p>
+                    </div>
+                    <div className='flex justify-center items-center flex-col gap-4'>
+                      <p className='text-[#95C9BD] text-[10px] sm:text-[16px] md:text-[20px] 2xl:text-[28px] 3xl:text-[36px] font-terminaExtraDemi'>
+                        0.004 SOL
+                      </p>
+                      <p className='text-[12px] sm:text-[14px] md:text-[16px] 2xl:text-[24px] font-normal 3xl:text-[32px] text-[#bca378]/90'>
+                        Listing Cost
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -193,3 +193,23 @@ body {
     width: 100% !important;
   }
 }
+
+/* Scoreboard animation for spinning numbers */
+@keyframes spinUp {
+  0% {
+    transform: translateY(0) rotateX(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-30px) rotateX(90deg);
+    opacity: 0;
+  }
+  51% {
+    transform: translateY(30px) rotateX(-90deg);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) rotateX(0deg);
+    opacity: 1;
+  }
+}
