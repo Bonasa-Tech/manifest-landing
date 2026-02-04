@@ -88,7 +88,7 @@ const Onchain = () => {
                     Being fully on-chain allows funds to remain in users possession. Never trust another CEX again.
                   </p>
                   <a
-                    href='https://github.com/CKS-Systems/manifest'
+                    href='https://github.com/Bonasa-Tech/manifest'
                     className='flex hover:opacity-80 hrGr group z-50 justify-center items-center gap-2 mt-8 lg:mt-14 xl:mt-8 pb-4'
                     target='_blank'
                     rel='noopener noreferrer'
